@@ -6,10 +6,10 @@ import { Check, Copy } from 'lucide-react'
 interface CodeBlockProps {
     language?: string
     code: string
-    inline: boolean
+    inline?: boolean
 }
 
-export function CodeBlock({ language, code, inline }: CodeBlockProps) {
+export function CodeBlock({ language, code }: CodeBlockProps) {
     const [copied, setCopied] = useState(false)
 
     const handleCopy = async () => {
