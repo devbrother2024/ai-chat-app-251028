@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { type Message, type ChatSession } from '@/lib/types'
 import {
     loadSessions,
@@ -12,9 +13,13 @@ import {
 import { ChatHistory } from './components/chat-history'
 import { ChatInput } from './components/chat-input'
 import { Sidebar } from './components/sidebar'
-import { Menu, Trash2 } from 'lucide-react'
+import { MCPConnectionStatus } from './components/mcp-connection-status'
+import { useMCP } from './contexts/mcp-context'
+import { Menu, Trash2, Server } from 'lucide-react'
 
 export default function Home() {
+    const router = useRouter()
+    const { sessionId, connections } = useMCP()
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
@@ -36,6 +41,7 @@ export default function Home() {
             // Create a new session if none exist
             handleNewChat()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     // Save current session when messages change
@@ -134,6 +140,18 @@ export default function Home() {
         setIsStreaming(true)
         setStreamingContent('')
 
+        // 세션 ID 확인
+        if (!sessionId) {
+            console.error('Session ID is not available')
+            setIsStreaming(false)
+            return
+        }
+
+        // 연결된 MCP 서버 목록 수집
+        const connectedServers = Array.from(connections.entries())
+            .filter(([, state]) => state.status === 'connected')
+            .map(([serverId]) => serverId)
+
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -143,6 +161,8 @@ export default function Home() {
                 body: JSON.stringify({
                     message,
                     history: messages,
+                    sessionId,
+                    connectedServers,
                 }),
             })
 
@@ -221,15 +241,27 @@ export default function Home() {
                                 <Menu className="h-5 w-5" />
                             </button>
                             <h1 className="text-xl font-semibold">AI Chat</h1>
+                            
+                            {/* MCP 연결 상태 표시 */}
+                            <MCPConnectionStatus />
                         </div>
-                        <button
-                            onClick={handleClearCurrentSession}
-                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                            disabled={isStreaming || messages.length === 0}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="hidden sm:inline">대화 초기화</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => router.push('/mcp-servers')}
+                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                                <Server className="h-4 w-4" />
+                                <span className="hidden sm:inline">MCP 서버</span>
+                            </button>
+                            <button
+                                onClick={handleClearCurrentSession}
+                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                disabled={isStreaming || messages.length === 0}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">대화 초기화</span>
+                            </button>
+                        </div>
                     </div>
                 </header>
 

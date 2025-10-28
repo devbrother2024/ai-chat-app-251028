@@ -11,6 +11,7 @@ interface MarkdownRendererProps {
 }
 
 // Helper function to extract text content from React nodes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getTextContent(node: any): string {
     if (typeof node === 'string') return node
     if (typeof node === 'number') return String(node)
@@ -21,6 +22,7 @@ function getTextContent(node: any): string {
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     const components: Components = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         code(props: any) {
             const { inline, className, children } = props
             const match = /language-(\w+)/.exec(className || '')

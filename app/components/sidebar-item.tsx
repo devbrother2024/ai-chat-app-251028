@@ -77,6 +77,7 @@ export function SidebarItem({
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault()
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         handleDelete(e as any)
                                     }
                                 }}
