@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { type Message, type ChatSession } from '@/lib/types'
 import {
@@ -27,6 +27,15 @@ export default function Home() {
     const [streamingContent, setStreamingContent] = useState('')
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
+    const handleNewChat = useCallback(() => {
+        const newSession = createNewSession()
+        setSessions((prev) => [newSession, ...prev])
+        setCurrentSessionId(newSession.id)
+        setMessages([])
+        saveSession(newSession)
+        setSidebarOpen(false)
+    }, [])
+
     // Load sessions on mount
     useEffect(() => {
         const loadedSessions = loadSessions()
@@ -41,8 +50,7 @@ export default function Home() {
             // Create a new session if none exist
             handleNewChat()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [handleNewChat])
 
     // Save current session when messages change
     useEffect(() => {
@@ -65,16 +73,7 @@ export default function Home() {
                 )
             }
         }
-    }, [messages, currentSessionId])
-
-    const handleNewChat = () => {
-        const newSession = createNewSession()
-        setSessions((prev) => [newSession, ...prev])
-        setCurrentSessionId(newSession.id)
-        setMessages([])
-        saveSession(newSession)
-        setSidebarOpen(false)
-    }
+    }, [messages, currentSessionId, sessions])
 
     const handleSelectSession = (sessionId: string) => {
         const session = sessions.find((s) => s.id === sessionId)

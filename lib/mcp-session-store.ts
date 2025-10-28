@@ -231,7 +231,6 @@ class MCPSessionStore {
 // 전역 싱글톤 인스턴스
 // Next.js HMR 대응을 위한 전역 캐싱
 declare global {
-    // eslint-disable-next-line no-var
     var mcpSessionStore: MCPSessionStore | undefined
 }
 

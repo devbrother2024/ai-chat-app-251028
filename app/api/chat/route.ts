@@ -88,8 +88,7 @@ export async function POST(request: Request) {
                         name: tool.name,
                         description:
                             tool.description || `MCP tool: ${tool.name}`,
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        parameters: tool.inputSchema as any
+                        parameters: tool.inputSchema as Record<string, unknown>
                     })
                 }
             } catch (error) {
@@ -186,8 +185,14 @@ export async function POST(request: Request) {
                         const text = chunk.text
 
                         // MCP 함수 호출 처리
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const functionCalls = (chunk as any).functionCalls
+                        const functionCalls = (
+                            chunk as {
+                                functionCalls?: Array<{
+                                    name: string
+                                    args: Record<string, unknown>
+                                }>
+                            }
+                        ).functionCalls
 
                         if (functionCalls && functionCalls.length > 0) {
                             console.log(
@@ -201,8 +206,7 @@ export async function POST(request: Request) {
                                     JSON.stringify(fnCall.args, null, 2)
                                 )
                                 const toolName = fnCall.name
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const args = (fnCall.args as any) || {}
+                                const args = fnCall.args || {}
                                 const serverId = toolServerMap.get(toolName)
 
                                 if (!serverId) {
@@ -250,10 +254,15 @@ export async function POST(request: Request) {
 
                                     // 도구 결과를 사용자에게 표시
                                     const toolResultText = `\n\n[MCP Tool: ${toolName}]\n${
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        (toolResult.content as any[])
-                                            .map(c => c.text || '')
-                                            .join('\n')
+                                        Array.isArray(toolResult.content)
+                                            ? (
+                                                  toolResult.content as Array<{
+                                                      text?: string
+                                                  }>
+                                              )
+                                                  .map(c => c.text || '')
+                                                  .join('\n')
+                                            : ''
                                     }\n`
 
                                     controller.enqueue(
@@ -266,12 +275,17 @@ export async function POST(request: Request) {
                                     )
 
                                     try {
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        const toolResultData = (
-                                            toolResult.content as any[]
+                                        const toolResultData = Array.isArray(
+                                            toolResult.content
                                         )
-                                            .map(c => c.text || '')
-                                            .join('\n')
+                                            ? (
+                                                  toolResult.content as Array<{
+                                                      text?: string
+                                                  }>
+                                              )
+                                                  .map(c => c.text || '')
+                                                  .join('\n')
+                                            : ''
 
                                         // 도구 결과를 포함한 명확한 한국어 프롬프트 생성
                                         const followUpPrompt = `다음은 ${toolName} 도구의 실행 결과입니다:\n\n${toolResultData}\n\n이 정보를 바탕으로 사용자의 질문에 대해 자연스럽고 친절한 한국어로 답변해주세요.`
